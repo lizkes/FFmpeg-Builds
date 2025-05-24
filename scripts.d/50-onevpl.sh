@@ -1,7 +1,7 @@
 #!/bin/bash
 
-SCRIPT_REPO="https://github.com/oneapi-src/oneVPL.git"
-SCRIPT_COMMIT="2232af4cdb13c0018d965c3b040466ad89b1922b"
+SCRIPT_REPO="https://github.com/intel/libvpl.git"
+SCRIPT_COMMIT="c45b5d786bf7cdabbe49ff1bab78693ad78feb78"
 
 ffbuild_enabled() {
     [[ $TARGET == *arm64 ]] && return -1
@@ -12,9 +12,6 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" onevpl
-    cd onevpl
-
     mkdir build && cd build
 
     cmake -GNinja -DCMAKE_TOOLCHAIN_FILE="$FFBUILD_CMAKE_TOOLCHAIN" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$FFBUILD_PREFIX" \
@@ -28,11 +25,11 @@ ffbuild_dockerbuild() {
 
     rm -rf "$FFBUILD_PREFIX"/{etc,share}
 
-    cat /opt/ffbuild/lib/pkgconfig/vpl.pc
+    echo "Libs.private: -lstdc++" >> "$FFBUILD_PREFIX"/lib/pkgconfig/vpl.pc
 }
 
 ffbuild_configure() {
-    [[ $ADDINS_STR == *onevpl* ]] && echo --enable-libvpl
+    echo --enable-libvpl
 }
 
 ffbuild_unconfigure() {

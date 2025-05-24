@@ -1,23 +1,17 @@
 #!/bin/bash
 
-SCRIPT_REPO="https://gitlab.freedesktop.org/fontconfig/fontconfig.git"
-SCRIPT_COMMIT="fd0753af88f746fd3d729bf6e1df08eefeeaa3ac"
+SCRIPT_REPO="https://gitlab.freedesktop.org/freetype/freetype.git"
+SCRIPT_COMMIT="ab0fe6d55e8001eb2835af65381ab3626e382377"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" fc
-    cd fc
-
-    ./autogen.sh --noconf
+    ./autogen.sh
 
     local myconf=(
         --prefix="$FFBUILD_PREFIX"
-        --disable-docs
-        --enable-libxml2
-        --enable-iconv
         --disable-shared
         --enable-static
     )
@@ -34,12 +28,14 @@ ffbuild_dockerbuild() {
     ./configure "${myconf[@]}"
     make -j$(nproc)
     make install
+
+    echo "Libs.private: -lharfbuzz" >> "$FFBUILD_PREFIX"/lib/pkgconfig/freetype2.pc
 }
 
 ffbuild_configure() {
-    echo --enable-fontconfig
+    echo --enable-libfreetype
 }
 
 ffbuild_unconfigure() {
-    echo --disable-fontconfig
+    echo --disable-libfreetype
 }

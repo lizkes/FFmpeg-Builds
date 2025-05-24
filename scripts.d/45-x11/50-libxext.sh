@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://gitlab.freedesktop.org/xorg/lib/libxext.git"
-SCRIPT_COMMIT="c6eded76e212419518bd955cad58c96b8653840e"
+SCRIPT_COMMIT="23eeaa46152fb91a0601571f989c0d625bfc9994"
 
 ffbuild_enabled() {
     [[ $TARGET != linux* ]] && return -1
@@ -9,9 +9,6 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" libxext
-    cd libxext
-
     autoreconf -i
 
     local myconf=(

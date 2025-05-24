@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://gitlab.freedesktop.org/xorg/proto/xorgproto.git"
-SCRIPT_COMMIT="824001c947cb1962209c6a8f2c63c2637877220d"
+SCRIPT_COMMIT="1914233e662d23ffb3812b80fadd0bbd064ad91c"
 
 ffbuild_enabled() {
     [[ $TARGET != linux* ]] && return -1
@@ -9,9 +9,6 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" xproto
-    cd xproto
-
     autoreconf -i
 
     local myconf=(

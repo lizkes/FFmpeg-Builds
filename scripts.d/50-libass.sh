@@ -1,16 +1,13 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/libass/libass.git"
-SCRIPT_COMMIT="b890df23eb8931728acdf240fd5d29e53401b4f2"
+SCRIPT_COMMIT="695509365f152bd28720a0c0e036d46836ee9345"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" ass
-    cd ass
-
     ./autogen.sh
 
     local myconf=(
@@ -28,6 +25,8 @@ ffbuild_dockerbuild() {
         echo "Unknown target"
         return -1
     fi
+
+    export CFLAGS="$CFLAGS -Dread_file=libass_internal_read_file"
 
     ./configure "${myconf[@]}"
     make -j$(nproc)

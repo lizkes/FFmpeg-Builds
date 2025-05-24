@@ -1,18 +1,13 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/FFTW/fftw3.git"
-SCRIPT_COMMIT="619564efbf84199f87e1a3047da00b600208fca2"
+SCRIPT_COMMIT="816722732224231e90e634b5839bb7808cddc6cd"
 
 ffbuild_enabled() {
-    # Dependency of GPL-Only librubberband
-    [[ $VARIANT == lgpl* ]] && return -1
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT_PINNED" fftw3
-    cd fftw3
-
     local myconf=(
         --prefix="$FFBUILD_PREFIX"
         --enable-maintainer-mode
@@ -42,6 +37,8 @@ ffbuild_dockerbuild() {
         echo "Unknown target"
         return -1
     fi
+
+    sed -i 's/windows.h/process.h/' configure.ac
 
     ./bootstrap.sh "${myconf[@]}"
     make -j$(nproc)

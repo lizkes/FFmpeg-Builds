@@ -1,7 +1,7 @@
 #!/bin/bash
 
-SCRIPT_REPO="https://github.com/mirror/x264.git"
-SCRIPT_COMMIT="baee400fa9ced6f5481a728138fed6e867b0ff7f"
+SCRIPT_REPO="https://code.videolan.org/videolan/x264.git"
+SCRIPT_COMMIT="32c3b801191522961102d4bea292cdb61068d0dd"
 
 ffbuild_enabled() {
     [[ $VARIANT == lgpl* ]] && return -1
@@ -9,9 +9,6 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" x264
-    cd x264
-
     local myconf=(
         --disable-cli
         --enable-static

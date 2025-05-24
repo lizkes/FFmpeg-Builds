@@ -1,18 +1,18 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://gitlab.freedesktop.org/pulseaudio/pulseaudio.git"
-SCRIPT_COMMIT="8188b49bed7be08e23abcf92b098f62c1fc5c2ec"
+SCRIPT_COMMIT="98c7c9eafb148c6e66e5fe178fc156b00f3bf51a"
 
 ffbuild_enabled() {
     [[ $TARGET == linux* ]] || return 1
     return 0
 }
 
-ffbuild_dockerbuild() {
-    git clone --filter=blob:none "$SCRIPT_REPO" pa
-    cd pa
-    git checkout "$SCRIPT_COMMIT"
+ffbuild_dockerdl() {
+    echo "git clone --filter=blob:none \"$SCRIPT_REPO\" . && git checkout \"$SCRIPT_COMMIT\""
+}
 
+ffbuild_dockerbuild() {
     # Kill build of utils and their sndfile dep
     echo > src/utils/meson.build
     echo > src/pulsecore/sndfile-util.c
@@ -51,8 +51,8 @@ ffbuild_dockerbuild() {
 
     rm -r "$FFBUILD_PREFIX"/share
 
-    echo "Libs.private: -ldl -lrt" >> "$FFBUILD_PREFIX"/lib/pkgconfig/libpulse.pc
-    echo "Libs.private: -ldl -lrt" >> "$FFBUILD_PREFIX"/lib/pkgconfig/libpulse-simple.pc
+    echo "Libs.private: -ldl -lrt -liconv" >> "$FFBUILD_PREFIX"/lib/pkgconfig/libpulse.pc
+    echo "Libs.private: -ldl -lrt -liconv" >> "$FFBUILD_PREFIX"/lib/pkgconfig/libpulse-simple.pc
 }
 
 ffbuild_configure() {

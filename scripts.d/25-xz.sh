@@ -1,20 +1,18 @@
 #!/bin/bash
 
-SCRIPT_REPO="https://github.com/xz-mirror/xz.git"
-SCRIPT_COMMIT="4773608554d1b684a05ff9c1d879cf5c42266d33"
+SCRIPT_REPO="https://github.com/tukaani-project/xz.git"
+SCRIPT_COMMIT="dbfb925c8198087afb3527e6c57b66fae1a980bb"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" xz
-    cd xz
-
-    ./autogen.sh --no-po4a
+    ./autogen.sh --no-po4a --no-doxygen
 
     local myconf=(
         --prefix="$FFBUILD_PREFIX"
+        --disable-symbol-versions
         --disable-shared
         --enable-static
         --with-pic

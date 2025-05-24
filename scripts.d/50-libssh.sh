@@ -1,27 +1,18 @@
 #!/bin/bash
 
-SCRIPT_REPO="https://git.libssh.org/projects/libssh.git"
-SCRIPT_COMMIT="ac6d2fad4a8bf07277127736367e90387646363f"
+SCRIPT_REPO="https://gitlab.com/libssh/libssh-mirror.git"
+SCRIPT_COMMIT="dcb65fe5845dce13990e67b9e1266133327976cf"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" libssh
-    cd libssh
-
     mkdir build && cd build
 
-    if [[ $TARGET == win* ]]; then
-        export CFLAGS="$CFLAGS -Dgettimeofday=ssh_gettimeofday"
-        export CXXFLAGS="$CFLAGS -Dgettimeofday=ssh_gettimeofday"
-    fi
-
     cmake -GNinja -DCMAKE_TOOLCHAIN_FILE="$FFBUILD_CMAKE_TOOLCHAIN" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$FFBUILD_PREFIX" \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DWITH_EXAMPLES=OFF -DWITH_SERVER=OFF \
-        -DWITH_SFTP=ON -DWITH_ZLIB=ON ..
+        -DBUILD_SHARED_LIBS=OFF -DWITH_EXAMPLES=OFF -DWITH_SERVER=OFF -DWITH_SFTP=ON -DWITH_ZLIB=ON \
+        ..
 
     ninja -j$(nproc)
     ninja install
@@ -29,6 +20,10 @@ ffbuild_dockerbuild() {
     {
         echo "Requires.private: libssl libcrypto zlib"
         echo "Cflags.private: -DLIBSSH_STATIC"
+        if [[ $TARGET == win* ]]; then
+            echo "Libs.private: -liphlpapi -lws2_32"
+        fi
+        echo "Libs.private: -lpthread"
     } >> "$FFBUILD_PREFIX"/lib/pkgconfig/libssh.pc
 }
 

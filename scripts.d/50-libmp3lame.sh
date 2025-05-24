@@ -1,16 +1,17 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://svn.code.sf.net/p/lame/svn/trunk/lame"
-SCRIPT_REV="6507"
+SCRIPT_REV="6531"
 
 ffbuild_enabled() {
     return 0
 }
 
-ffbuild_dockerbuild() {
-    retry-tool sh -c "rm -rf lame && svn checkout '${SCRIPT_REPO}@${SCRIPT_REV}' lame"
-    cd lame
+ffbuild_dockerdl() {
+    echo "retry-tool sh -c \"rm -rf lame && svn checkout '${SCRIPT_REPO}@${SCRIPT_REV}' lame\" && cd lame"
+}
 
+ffbuild_dockerbuild() {
     autoreconf -i
 
     local myconf=(
@@ -32,6 +33,8 @@ ffbuild_dockerbuild() {
         echo "Unknown target"
         return -1
     fi
+
+    export CFLAGS="$CFLAGS -DNDEBUG -Wno-error=incompatible-pointer-types"
 
     ./configure "${myconf[@]}"
     make -j$(nproc)

@@ -1,21 +1,20 @@
 #!/bin/bash
 
-SCRIPT_REPO="https://github.com/harfbuzz/harfbuzz.git"
-SCRIPT_COMMIT="4ab7e579cb8f4fd4f5ee2e1c0404e58edf8eb8e6"
+SCRIPT_REPO="https://gitlab.freedesktop.org/freetype/freetype.git"
+SCRIPT_COMMIT="ab0fe6d55e8001eb2835af65381ab3626e382377"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" harfbuzz
-    cd harfbuzz
+    ./autogen.sh
 
     local myconf=(
         --prefix="$FFBUILD_PREFIX"
+        --without-harfbuzz
         --disable-shared
         --enable-static
-        --with-pic
     )
 
     if [[ $TARGET == win* || $TARGET == linux* ]]; then
@@ -27,9 +26,7 @@ ffbuild_dockerbuild() {
         return -1
     fi
 
-    export LIBS="-lpthread"
-
-    ./autogen.sh "${myconf[@]}"
+    ./configure "${myconf[@]}"
     make -j$(nproc)
     make install
 }

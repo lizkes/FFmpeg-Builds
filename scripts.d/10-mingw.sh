@@ -1,7 +1,7 @@
 #!/bin/bash
 
-SCRIPT_REPO="https://github.com/mirror/mingw-w64.git"
-SCRIPT_COMMIT="fcbc39cf846c12c898998b82fe8126601884b4e2"
+SCRIPT_REPO="https://git.code.sf.net/p/mingw-w64/mingw-w64.git"
+SCRIPT_COMMIT="70824074a389b3feecaca6527e77bcbbe9d6dfaa"
 
 ffbuild_enabled() {
     [[ $TARGET == win* ]] || return -1
@@ -9,51 +9,92 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerlayer() {
-    to_df "COPY --from=${SELFLAYER} /opt/mingw/. /"
-    to_df "COPY --from=${SELFLAYER} /opt/mingw/. /opt/mingw"
+    [[ $TARGET == winarm* ]] && return 0
+    to_df "COPY --link --from=${SELFLAYER} /opt/mingw/. /"
+    to_df "COPY --link --from=${SELFLAYER} /opt/mingw/. /opt/mingw"
 }
 
 ffbuild_dockerfinal() {
-    to_df "COPY --from=${PREVLAYER} /opt/mingw/. /"
+    [[ $TARGET == winarm* ]] && return 0
+    to_df "COPY --link --from=${PREVLAYER} /opt/mingw/. /"
+}
+
+ffbuild_dockerdl() {
+    echo "retry-tool sh -c \"rm -rf mingw && git clone '$SCRIPT_REPO' mingw\" && cd mingw && git checkout \"$SCRIPT_COMMIT\""
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" mingw
-    cd mingw
+    [[ $TARGET == winarm* ]] && return 0
 
-    cd mingw-w64-headers
+    if [[ -z "$COMPILER_SYSROOT" ]]; then
+        COMPILER_SYSROOT="$(${CC} -print-sysroot)/usr/${FFBUILD_TOOLCHAIN}"
+    fi
 
-    unset CFLAGS
-    unset CXXFLAGS
-    unset LDFLAGS
+    unset CC CXX LD AR CPP LIBS CCAS
+    unset CFLAGS CXXFLAGS LDFLAGS CPPFLAGS CCASFLAGS
     unset PKG_CONFIG_LIBDIR
 
-    GCC_SYSROOT="$(${FFBUILD_CROSS_PREFIX}gcc -print-sysroot)"
+    ###
+    ### mingw-w64-headers
+    ###
+    (
+        cd mingw-w64-headers
 
-    local myconf=(
-        --prefix="$GCC_SYSROOT/usr/$FFBUILD_TOOLCHAIN"
-        --host="$FFBUILD_TOOLCHAIN"
-        --with-default-win32-winnt="0x601"
-        --enable-idl
+        local myconf=(
+            --prefix="$COMPILER_SYSROOT"
+            --host="$FFBUILD_TOOLCHAIN"
+            --with-default-win32-winnt="0x601"
+            --with-default-msvcrt=ucrt
+            --enable-idl
+            --enable-sdk=all
+            --enable-secure-api
+        )
+
+        ./configure "${myconf[@]}"
+        make -j$(nproc)
+        make install DESTDIR="/opt/mingw"
     )
 
-    ./configure "${myconf[@]}"
-    make -j$(nproc)
-    make install DESTDIR="/opt/mingw"
+    cp -a /opt/mingw/. /
 
-    cd ../mingw-w64-libraries/winpthreads
+    ###
+    ### mingw-w64-crt
+    ###
+    (
+        cd mingw-w64-crt
 
-    local myconf=(
-        --prefix="$GCC_SYSROOT/usr/$FFBUILD_TOOLCHAIN"
-        --host="$FFBUILD_TOOLCHAIN"
-        --with-pic
-        --disable-shared
-        --enable-static
+        local myconf=(
+            --prefix="$COMPILER_SYSROOT"
+            --host="$FFBUILD_TOOLCHAIN"
+            --with-default-msvcrt=ucrt
+            --enable-wildcard
+        )
+
+        ./configure "${myconf[@]}"
+        make -j$(nproc)
+        make install DESTDIR="/opt/mingw"
     )
 
-    ./configure "${myconf[@]}"
-    make -j$(nproc)
-    make install DESTDIR="/opt/mingw"
+    cp -a /opt/mingw/. /
+
+    ###
+    ### mingw-w64-libraries/winpthreads
+    ###
+    (
+        cd mingw-w64-libraries/winpthreads
+
+        local myconf=(
+            --prefix="$COMPILER_SYSROOT"
+            --host="$FFBUILD_TOOLCHAIN"
+            --with-pic
+            --disable-shared
+            --enable-static
+        )
+
+        ./configure "${myconf[@]}"
+        make -j$(nproc)
+        make install DESTDIR="/opt/mingw"
+    )
 }
 
 ffbuild_configure() {
